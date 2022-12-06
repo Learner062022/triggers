@@ -1,0 +1,44 @@
+CREATE TABLE IF NOT EXISTS customer_contact_details(
+customer_name VARCHAR(20),
+mobile_phone_number CHAR(10),
+email_address VARCHAR(20) NOT NULL PRIMARY KEY
+);
+
+CREATE TABLE IF NOT EXISTS accounts(
+account_number TINYINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+balance DECIMAL(7, 2) UNSIGNED,
+interest_rate DECIMAL(5, 4) UNSIGNED
+);
+
+DELIMITER //
+CREATE PROCEDURE month(rate DECIMAL(5, 4) UNSIGNED)
+BEGIN
+SELECT interest_rate / 12 + rate / 12 FROM accounts;
+END //
+DELIMITER ;
+
+CREATE TABLE IF NOT EXISTS change_log_table(
+account_number TINYINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+old_balance DECIMAL(7, 2),
+new_balance DECIMAL(10, 2),
+old_interest_rate DECIMAL(5, 4),
+new_interest_rate DECIMAL(6, 4),
+modified TIMESTAMP
+);
+
+DELIMITER //
+CREATE TRIGGER updating_change_log_table AFTER UPDATE ON accounts FOR EACH ROW
+BEGIN
+
+IF NEW.balance != OLD.balance THEN
+INSERT INTO change_log_table(account_number, old_balance, new_balance, modified) VALUES (NEW.account_number, OLD.balance, NEW.balance, CURRENT_TIMESTAMP);
+END IF;
+
+IF NEW.interest_rate != OLD.interest_rate THEN
+INSERT INTO change_log_table(account_number, old_interest_rate, new_interest_rate, modified) VALUES (NEW.account_number, OLD.interest_rate, NEW.interest_rate, CURRENT_TIMESTAMP);
+END IF;
+
+END // 
+DELIMITER ;
+
+UPDATE accounts SET balance = 1 WHERE account_number = 1;
